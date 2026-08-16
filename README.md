@@ -4,7 +4,7 @@
 
 I'm a software engineer with 8+ years of experience building backend and full-stack applications, now specializing in **cloud infrastructure and platform engineering**.
 
-I build hands-on Azure environments that go beyond provisioning resources. My projects focus on **governance, security, automation, reliability, observability, and cost control**, with infrastructure defined as code and validated through real tests.
+I build hands-on Azure environments that go beyond provisioning resources. My projects focus on **governance, security, automation, reliability, observability, and cost control**, with infrastructure defined as code and validated through real tests against live subscriptions, not just `terraform plan`.
 
 I document the architecture, engineering decisions, trade-offs, failures, troubleshooting, and production limitations behind each build.
 
@@ -32,6 +32,26 @@ The environment implements:
 The project also validates the controls through deliberate enforcement tests rather than assuming that a deployed policy works.
 
 **→ [View the Landing Zone repository](https://github.com/GreatOmotayo/azure-multi-subscription-landing-zone)**
+
+---
+
+### 🔐 Hub-and-Spoke Network Architecture with Zero-Trust Access Control
+
+**Azure Firewall · Azure Bastion · VNet Peering · Route Tables · NSGs · Log Analytics · Terraform · Multi-Subscription**
+
+A Terraform-managed hub-and-spoke network topology built on top of the Landing Zone above, adding centralized traffic inspection and zero-trust access control across Production and NonProd.
+
+The environment implements:
+
+* Hub VNet hosting Azure Firewall (Standard, Deny-mode threat intelligence) and Azure Bastion (Standard, native client tunneling)
+* Forced-tunneling user-defined routes on every spoke subnet — no spoke can reach another directly, no direct spoke-to-spoke peering exists
+* Zero public SSH/RDP anywhere in the environment — access is exclusively through SSO-gated Bastion
+* Centralized Log Analytics workspace for Firewall and Bastion diagnostics
+* AKS-ready node subnets, pre-integrated with routing, NSGs, and logging, for a future workload
+
+Every control was independently validated post-deployment against live infrastructure, not just asserted from the Terraform code: forced tunneling confirmed via effective route tables pulled from a real VM, spoke-to-spoke isolation confirmed by a deliberate blocked connection attempt with a matching Firewall deny log, and zero public IP exposure confirmed with an Azure Resource Graph query across all three subscriptions. Deploying against real organizational governance also surfaced genuine issues along the way — a policy blocking a feature for a root cause that took real investigation to isolate, an Azure Resource Manager timing issue, a Terraform dependency race condition — each diagnosed and fixed, documented in the decision log rather than quietly patched over.
+
+**→ [View the Hub-and-Spoke repository](https://github.com/GreatOmotayo/azure-hub-spoke-zero-trust-network)**
 
 ---
 
@@ -102,11 +122,11 @@ Policies, guardrails, budgets and environment-specific controls.
 
 **Testing**
 
-Deliberately testing controls and documenting expected versus actual behavior.
+Deliberately testing controls against live infrastructure and documenting expected versus actual behavior.
 
 **Troubleshooting**
 
-Keeping a record of real failures, root causes and fixes.
+Keeping a record of real failures, root causes and fixes — not just the parts that worked on the first try.
 
 **Engineering Decisions**
 
@@ -170,7 +190,6 @@ I'm continuing to expand the portfolio from individual infrastructure capabiliti
 
 Upcoming work includes:
 
-* 🔐 Hub-and-Spoke Network Architecture with Zero-Trust Access
 * 📊 Full Azure Observability and Incident Response
 * 🚀 Highly Available and Auto-Scaling Application Platform
 * ☸️ AKS / Kubernetes Platform Engineering
